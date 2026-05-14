@@ -1,5 +1,6 @@
 package com.example.calculatorapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -11,6 +12,7 @@ public class MainActivity extends AppCompatActivity {
     TextView display;
 
     String currentInput = "";
+    String history = "";
     double previousResult = 0;
     String currentOperator = "";
     boolean afterEquals = false;
@@ -49,6 +51,25 @@ public class MainActivity extends AppCompatActivity {
         // Clear
         Button btnClear = findViewById(R.id.btnClear);
         btnClear.setOnClickListener(v -> clearAll());
+
+        // Base conversion
+        Button btnBinary = findViewById(R.id.btnBinary);
+        Button btnOctal = findViewById(R.id.btnOctal);
+        Button btnHex = findViewById(R.id.btnHex);
+
+        btnBinary.setOnClickListener(v -> convertBase(2));
+        btnOctal.setOnClickListener(v -> convertBase(8));
+        btnHex.setOnClickListener(v -> convertBase(16));
+        Button btnHistory = findViewById(R.id.btnHistory);
+
+        btnHistory.setOnClickListener(v -> {
+
+            Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
+
+            intent.putExtra("history", history);
+
+            startActivity(intent);
+        });
     }
 
     private void setupNumberButton(int id, String number) {
@@ -61,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            // Start new calculation after =
             if (afterEquals) {
                 currentInput = "";
                 previousResult = 0;
@@ -125,6 +145,8 @@ public class MainActivity extends AppCompatActivity {
 
         double currentNumber = Double.parseDouble(currentInput);
 
+        double firstNumber = previousResult;
+
         previousResult = performOperation(
                 previousResult,
                 currentNumber,
@@ -134,6 +156,11 @@ public class MainActivity extends AppCompatActivity {
         if (errorState) {
             return;
         }
+
+        history += firstNumber + " "
+                + currentOperator + " "
+                + currentNumber + " = "
+                + previousResult + "\n";
 
         display.setText(String.valueOf(previousResult));
 
@@ -170,6 +197,48 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return b;
+    }
+
+    private void convertBase(int base) {
+
+        if (errorState) {
+            return;
+        }
+
+        try {
+
+            int number;
+
+            if (!currentInput.isEmpty()) {
+                number = Integer.parseInt(currentInput);
+            } else {
+                number = (int) previousResult;
+            }
+
+            String result = "";
+
+            switch (base) {
+
+                case 2:
+                    result = Integer.toBinaryString(number);
+                    break;
+
+                case 8:
+                    result = Integer.toOctalString(number);
+                    break;
+
+                case 16:
+                    result = Integer.toHexString(number).toUpperCase();
+                    break;
+            }
+
+            display.setText(result);
+
+        } catch (Exception e) {
+
+            display.setText("Error");
+            errorState = true;
+        }
     }
 
     private void clearAll() {
